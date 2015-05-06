@@ -1,13 +1,11 @@
-#Encapsulate listening for messages
-ResponderHandler = require './responder_handler.coffee'
-MessageHandler   = require './message_handler.coffee'
+ResponderHandler = require './responder_handler'
+MessageHandler   = require './message_handler'
 q = require 'q'
 
 class Consumer
 
-  DEFAULT_OPTIONS =
-    queue:
-      autoDelete: true
+  QUEUE_OPTIONS =
+    autoDelete: true
 
   TOPIC_OPTIONS =
     durable: false
@@ -35,12 +33,12 @@ class Consumer
       throw "Destination must be provided as a string"
 
   consume: (queue, callback) ->
-    @consumeWithOptions(queue, DEFAULT_OPTIONS, callback)
+    @consumeWithOptions(queue, QUEUE_OPTIONS, callback)
 
-  consumeWithOptions: (queue, options, callback) ->
+  consumeWithOptions: (queue, queueOpts, callback) ->
     @_ensureQueue(queue)
     responderHandler = new ResponderHandler(@channel)
-    q(@channel.assertQueue(queue, options?.queue)).then (queueObject) =>
+    q(@channel.assertQueue(queue, queueOpts)).then (queueObject) =>
       responderHandler.queue = queueObject.queue
       return @_consumeWithQueueReady queueObject.queue, (message, messageObject) =>
         callback(message, new MessageHandler(@logger, messageObject.properties))

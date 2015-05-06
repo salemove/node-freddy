@@ -34,7 +34,7 @@ describe 'Freddy', ->
         done()
 
     it 'can send and receive messages', (done) ->
-      @freddy.respondTo @randomDest, (receivedMsg) ->
+      @freddy.respondTo @randomDest, (receivedMsg, handler) ->
         expect(receivedMsg).to.eql(msg)
         done()
       .done =>
@@ -103,3 +103,25 @@ describe 'Freddy', ->
           q.all([tapPromise, respondPromise]).then ->
             done()
           @freddy.deliver @randomDest, msg
+
+    context 'on timeout', ->
+      context 'with delete_on_timeout enabled', ->
+        it 'removes the message from the queue', (done) ->
+          @freddy.consumer.channel.assertQueue(@randomDest, autoDelete: true).then =>
+            @freddy.deliver @randomDest, msg, timeout: 0.01
+
+            setTimeout =>
+              @freddy.respondTo @randomDest, (payload, handler) ->
+                done(Error('message was still in the queue'))
+              .done =>
+                setTimeout (-> done()), 20
+            , 60
+
+      context 'with delete_on_timeout disabled', ->
+        it 'keeps the message in the queue', (done) ->
+          @freddy.consumer.channel.assertQueue(@randomDest, autoDelete: true).then =>
+            @freddy.deliver @randomDest, msg, timeout: 0.01, deleteOnTimeout: false
+
+            setTimeout =>
+              @freddy.respondTo @randomDest, (payload, handler) -> done()
+            , 20

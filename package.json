@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "coffee-script": ">=1.4",
-    "amqplib": ">=0.2.1",
+    "amqplib": "^0.3.2",
     "winston": ">= 0.7",
     "async": ">=0.2.10",
     "underscore": ">=1.6",

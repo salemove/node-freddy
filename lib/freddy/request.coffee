@@ -4,11 +4,8 @@ _ = require 'underscore'
 #Encapsulate the request-response types of messaging
 class Request
 
-  DEFAULT_TIMEOUT = 3
-
   RESPONSE_QUEUE_OPTIONS =
-    queue:
-      exclusive: true
+    exclusive: true
 
   MESSAGE_TYPES =
     ACK: 'ack'
@@ -27,14 +24,6 @@ class Request
       q(this)
 
   deliver: (destination, message, options, positiveCallback, negativeCallback) =>
-    if typeof options is 'function'
-      negativeCallback = positiveCallback
-      positiveCallback = options
-      options = {}
-
-    options ||= {}
-    options.timeout ||= DEFAULT_TIMEOUT
-
     if positiveCallback
       options.type = MESSAGE_TYPES.ACK
       @_request destination, message, options, (message, msgHandler) =>

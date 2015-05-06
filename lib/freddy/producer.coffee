@@ -22,17 +22,20 @@ class Producer
       @logger.error("Failed to prepare Producer: #{err}")
       q.reject(err)
 
-  produce: (destination, message = {}, options = {}) =>
+  produce: (destination, message = {}, options = {}) ->
     @_ensureDestination(destination)
     @logger.debug("Publishing to #{destination}:", message) unless options.suppressLog
 
-    _.extend options, contentType: 'application/json'
-    options.headers ||= {}
-    _.extend options.headers, suppressLog: (options.suppressLog || false)
+    rabbitOptions = _.pick(options, 'type', 'replyTo', 'correlationId')
+    rabbitOptions['contentType'] = 'application/json'
+    rabbitOptions['headers'] = {suppressLog: (options.suppressLog || false)}
+    if options['deleteOnTimeout']
+      rabbitOptions['expiration'] = Math.floor(options['timeout'] * 1000)
+
     messageToSend = @_prepareMessage(message)
 
-    @channel.publish(@topicName, destination, messageToSend, options)
-    @channel.sendToQueue(destination, messageToSend, options)
+    @channel.publish(@topicName, destination, messageToSend, rabbitOptions)
+    @channel.sendToQueue(destination, messageToSend, rabbitOptions)
 
   _ensureDestination: (destination) ->
     if (!destination? or !(typeof destination is 'string'))

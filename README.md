@@ -26,6 +26,7 @@ freddy.deliver(destination, message, options = {}, positiveCallback = null, nega
   The options include:
 
   * `timeout`: In seconds, defaults to 3.
+  * `deleteOnTimeout`: Defaults to true.
   * `suppressLog`: Avoid logging the message contents
 
 
