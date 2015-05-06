@@ -9,7 +9,7 @@ describe 'Consumer', ->
 
   beforeEach (done) ->
     TestHelper.connect().done (@connection) =>
-      @consumer = new Consumer(connection, TestHelper.logger('warn'))
+      @consumer = new Consumer(@connection, TestHelper.logger('warn'))
       done()
 
   after (done) ->

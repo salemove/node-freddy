@@ -14,13 +14,13 @@ describe 'Request', ->
 
   beforeEach (done) ->
     TestHelper.connect().done (@connection) =>
-      @producer = new Producer connection, TestHelper.logger('warn')
-      @consumer = new Consumer connection, TestHelper.logger('warn')
+      @producer = new Producer @connection, TestHelper.logger('warn')
+      @consumer = new Consumer @connection, TestHelper.logger('warn')
       @producer.prepare(@topicName)
       .then =>
         @consumer.prepare(@topicName)
       .done =>
-        @request = new Request connection, TestHelper.logger('warn')
+        @request = new Request @connection, TestHelper.logger('warn')
         done()
 
   afterEach (done) ->

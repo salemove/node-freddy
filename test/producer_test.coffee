@@ -7,7 +7,7 @@ describe 'Producer', ->
 
   beforeEach (done) ->
     TestHelper.connect().done (@connection) =>
-      @producer = new Producer connection, TestHelper.logger('warn')
+      @producer = new Producer @connection, TestHelper.logger('warn')
       done()
 
   after (done) ->
