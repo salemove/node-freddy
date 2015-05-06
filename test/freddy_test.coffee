@@ -62,7 +62,7 @@ describe 'Freddy', ->
 
     it 'can handle negative acknowledgements', (done) ->
       @freddy.respondTo @randomDest, (payload, handler) ->
-        handler.nack('not today')
+        handler.nack(error: 'not today')
       .done =>
         @freddy.deliver @randomDest, msg, ->
           done(Error('should have got negative ack'))
@@ -82,7 +82,7 @@ describe 'Freddy', ->
 
     it 'can handle messages that require a negative response', (done) ->
       @freddy.respondTo @randomDest, (payload, handler) ->
-        handler.nack('not today')
+        handler.nack(error: 'not today')
       .done =>
         @freddy.deliver @randomDest, msg, (response) ->
           done(Error('should have got a negative response'))

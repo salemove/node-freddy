@@ -60,7 +60,7 @@ class Request
     msgHandler.whenResponded.done (response) ->
       done(MESSAGE_TYPES.ACK, response)
     , (error) ->
-      done(MESSAGE_TYPES.NACK, error: error)
+      done(MESSAGE_TYPES.NACK, error)
     callback(message, msgHandler)
 
   _respondToSimpleDeliver: (message, msgHandler, callback) ->

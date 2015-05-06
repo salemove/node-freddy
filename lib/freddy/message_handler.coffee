@@ -1,4 +1,3 @@
-#Allow responder to use simple ack and nack to respond to messages
 q = require 'q'
 
 class MessageHandler
