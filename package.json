@@ -3,25 +3,28 @@
   "version": "0.2.11",
   "author": "Urmas Talimaa <urmas7@gmail.com>",
   "description": "Simple messaging API supporting acknowledgements and request-response",
-  "reporistory" : {
-    "type" : "git",
-    "url" : "https://github.com/salemove/freddy"
+  "reporistory": {
+    "type": "git",
+    "url": "https://github.com/salemove/freddy"
   },
-  "license" : "MIT",
+  "license": "MIT",
   "scripts": {
     "test": "mocha"
   },
-  "dependencies" : {
+  "dependencies": {
     "coffee-script": ">=1.4",
-    "amqplib" : ">=0.2.1",
+    "amqplib": ">=0.2.1",
     "winston": ">= 0.7",
     "async": ">=0.2.10",
     "underscore": ">=1.6",
     "q": ">= 1.0"
   },
-  "devDependencies" : {
+  "devDependencies": {
+    "chai": "^2.3.0",
+    "memo-is": "0.0.2",
     "mocha": ">=1.17",
     "should": ">=3.1",
-    "sinon": "latest"
+    "sinon": "latest",
+    "sinon-chai": "^2.7.0"
   }
 }

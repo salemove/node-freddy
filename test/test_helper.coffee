@@ -1,3 +1,9 @@
+# Configure chai
+chai = require 'chai'
+sinonChai = require 'sinon-chai'
+chai.use(sinonChai)
+global.expect = chai.expect
+
 winston   = require 'winston'
 amqp      = require 'amqplib'
 amqpUrl   = "amqp://guest:guest@localhost:5672"

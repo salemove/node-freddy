@@ -1,31 +1,30 @@
 Freddy      = require '../lib/freddy'
-TestHelper  = (require './test_helper')
+TestHelper  = require './test_helper'
 q           = require 'q'
 
 describe 'Freddy', ->
-  before -> @msg = test: 'data'
+  logger = TestHelper.logger('warn')
+  msg = {test: 'data'}
 
-  it 'exists', ->
-    Freddy.should.exist
+  describe '.connect', ->
+    context 'with correct amqp url', ->
+      it 'can connect to amqp', (done) ->
+        Freddy.connect(TestHelper.amqpUrl, logger).done ->
+          done()
+        , =>
+          done Error("Connection should have succeeded, but failed")
 
-  context 'with correct amqp url', ->
-    it 'can connect to amqp', (done) ->
-      Freddy.connect(TestHelper.amqpUrl, TestHelper.logger('warn')).done =>
-        done()
-      , =>
-        done Error("Connection should have succeeded, but failed")
-
-  context 'with incorrect amqp url', ->
-    it 'cannot connect', (done) ->
-      Freddy.connect('amqp://wrong:wrong@localhost:9000', TestHelper.logger('warn')).done (@freddy) ->
-        done(Error("Connection should have failed, but succeed"))
-      , =>
-        done()
+    context 'with incorrect amqp url', ->
+      it 'cannot connect', (done) ->
+        Freddy.connect('amqp://wrong:wrong@localhost:9000', logger).done ->
+          done(Error("Connection should have failed, but succeeded"))
+        , =>
+          done()
 
   context 'when connected', ->
     beforeEach (done) ->
       @randomDest = TestHelper.uniqueId()
-      Freddy.connect('amqp://guest:guest@localhost:5672', TestHelper.logger('warn')).done (@freddy) =>
+      Freddy.connect(TestHelper.amqpUrl, logger).done (@freddy) =>
         done()
       , (err) ->
         done(err)
@@ -34,29 +33,47 @@ describe 'Freddy', ->
       @freddy.shutdown().done ->
         done()
 
-    it 'can produce messages', ->
-      @freddy.deliver @randomDest, @msg
+    it 'can send and receive messages', (done) ->
+      @freddy.respondTo @randomDest, (receivedMsg) ->
+        expect(receivedMsg).to.eql(msg)
+        done()
+      .done =>
+        @freddy.deliver @randomDest, msg
 
-    describe 'when responding to messages', ->
+    it 'can catch errors', (done) ->
+      myError = new Error('catch me')
+      Freddy.addErrorListener (err) ->
+        err.should.eql(myError)
+        done()
 
-      it 'catches errors', (done) ->
-        myError = new Error('catch me')
-        Freddy.addErrorListener (err) ->
-          err.should.eql(myError)
+      @freddy.respondTo @randomDest, (message, msgHandler) ->
+        throw myError
+      .done =>
+        @freddy.deliver @randomDest, {}
+
+    it 'can handle positive acknowledgements', (done) ->
+      @freddy.respondTo @randomDest, (payload, handler) ->
+        handler.ack(res: 'yey')
+      .done =>
+        @freddy.deliverWithAck @randomDest, msg, (error) ->
+          expect(error).to.eql(false)
           done()
 
-        @freddy.respondTo @randomDest, (message, msgHandler) ->
-          throw myError
-        .done =>
-          @freddy.deliver @randomDest, {}
+    it 'can handle negative acknowledgements', (done) ->
+      @freddy.respondTo @randomDest, (payload, handler) ->
+        handler.nack('not today')
+      .done =>
+        @freddy.deliverWithAck @randomDest, msg, (error) ->
+          expect(error).to.eql('not today')
+          done()
 
-    describe 'with messages that need acknowledgement', ->
-      it 'can produce', ->
-        @freddy.deliverWithAck @randomDest, @msg, (->)
-
-    describe 'with messages that need response', ->
-      it 'can produce', ->
-        @freddy.deliverWithResponse @randomDest, @msg, (->)
+    it 'can handle messages that require a response', (done) ->
+      @freddy.respondTo @randomDest, (payload, handler) ->
+        handler.ack(pay: 'load')
+      .done =>
+        @freddy.deliverWithResponse @randomDest, msg, (response) ->
+          expect(response).to.eql(pay: 'load')
+          done()
 
     describe 'when tapping', ->
       it "doesn't consume message", (done) ->
@@ -70,4 +87,4 @@ describe 'Freddy', ->
         .done =>
           q.all([tapPromise, respondPromise]).then ->
             done()
-          @freddy.deliver @randomDest, @msg
+          @freddy.deliver @randomDest, msg
