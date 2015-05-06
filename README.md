@@ -1,5 +1,7 @@
 # Messaging API supporting acknowledgements and request-response
 
+[![Build Status](https://travis-ci.org/salemove/node-freddy.svg?branch=master)](https://travis-ci.org/salemove/node-freddy)
+
 ## Usage
 
 Since 0.2.1 freddy for node.js uses promises, more info at
