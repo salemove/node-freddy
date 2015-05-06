@@ -55,24 +55,39 @@ describe 'Freddy', ->
       @freddy.respondTo @randomDest, (payload, handler) ->
         handler.ack(res: 'yey')
       .done =>
-        @freddy.deliverWithAck @randomDest, msg, (error) ->
-          expect(error).to.eql(false)
+        @freddy.deliver @randomDest, msg, ->
           done()
+        , (error) ->
+          done(Error('should have got positive ack'))
 
     it 'can handle negative acknowledgements', (done) ->
       @freddy.respondTo @randomDest, (payload, handler) ->
         handler.nack('not today')
       .done =>
-        @freddy.deliverWithAck @randomDest, msg, (error) ->
-          expect(error).to.eql('not today')
+        @freddy.deliver @randomDest, msg, ->
+          done(Error('should have got negative ack'))
+        , (error) ->
+          expect(error).to.eql(error: 'not today')
           done()
 
     it 'can handle messages that require a response', (done) ->
       @freddy.respondTo @randomDest, (payload, handler) ->
         handler.ack(pay: 'load')
       .done =>
-        @freddy.deliverWithResponse @randomDest, msg, (response) ->
+        @freddy.deliver @randomDest, msg, (response) ->
           expect(response).to.eql(pay: 'load')
+          done()
+        , (error) ->
+          done(Error('should have got positive response'))
+
+    it 'can handle messages that require a negative response', (done) ->
+      @freddy.respondTo @randomDest, (payload, handler) ->
+        handler.nack('not today')
+      .done =>
+        @freddy.deliver @randomDest, msg, (response) ->
+          done(Error('should have got a negative response'))
+        , (error) ->
+          expect(error).to.eql(error: 'not today')
           done()
 
     describe 'when tapping', ->

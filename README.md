@@ -20,18 +20,7 @@ Freddy.connect('amqp://guest:guest@localhost:5672', logger).done (freddy) ->
 
 ### Delivering messages
 ```coffee
-freddy.deliver(destination, message, options = {})
-
-freddy.deliverWithAck(destination, message, callback)
-
-freddy.deliverWithResponse(destination, message, callback)
-```
-
-* The previous 2 can be used with additional options also:
-```coffee
-freddy.deliverWithAckAndOptions(destination, message, options, callback)
-
-freddy.deliverWithResponseAndOptions(destination, message, options, callback)
+freddy.deliver(destination, message, options = {}, positiveCallback = null, negativeCallback = null)
 ```
 
   The options include:
@@ -48,13 +37,13 @@ freddy.respondTo(destination, callback)
 * `respondTo` returns a promise which resolved with the ResponderHandler
 
 ```coffee
-freddy.respondTo(destination, callback)
+freddy.respondTo destination, (message, handler) ->
+  handler.ack(x: 'y')
 .done (responderHandler) ->
   doSthWith(responderHandler.cancel())
 ```
 
 ### The MessageHandler
-No differences to ruby spec
 
 ### Tapping into messages
 
@@ -75,7 +64,6 @@ freddy.respondTo(destination, (->))
 .done ->
   freddy.deliver(destination, easy: 'go') #will not be received
 ```
-* The join method is not provided for obvious reasons.
 
 ## Credits
 
@@ -87,11 +75,6 @@ freddy.respondTo(destination, (->))
 
 The names and logos for **SaleMove** are trademarks of SaleMove, Inc.
 
-## License
-
-**freddy** is Copyright © 2013 SaleMove Inc. It is free software, and may be redistributed under the terms specified in the [Apache License].
-
 [Urmas Talimaa]: https://github.com/urmastalimaa?source=c "Urmas"
 [SaleMove, Inc]: http://salemove.com/ "SaleMove Website"
 [SaleMove Logo]: http://app.salemove.com/assets/logo.png "SaleMove Inc. 2012"
-[Apache License]: http://choosealicense.com/licenses/apache/ "Apache License"
