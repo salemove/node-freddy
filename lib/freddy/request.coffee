@@ -8,8 +8,9 @@ class Request
     exclusive: true
 
   MESSAGE_TYPES =
-    ACK: 'ack'
-    NACK: 'nack'
+    REQUEST: 'request'
+    SUCCESS: 'success'
+    ERROR: 'error'
 
   constructor: (@connection, @logger) ->
     @requests = {}
@@ -25,9 +26,9 @@ class Request
 
   deliver: (destination, message, options, positiveCallback, negativeCallback) =>
     if positiveCallback
-      options.type = MESSAGE_TYPES.ACK
+      options.type = MESSAGE_TYPES.REQUEST
       @_request destination, message, options, (message, msgHandler) =>
-        if msgHandler.properties.type == MESSAGE_TYPES.ACK
+        if msgHandler.properties.type == MESSAGE_TYPES.SUCCESS
           positiveCallback message
         else if negativeCallback
           negativeCallback message
@@ -51,16 +52,16 @@ class Request
         @producer.produce properties.replyTo, response, {correlationId, type} if response?
 
   _responder: (properties) ->
-    if properties.type == MESSAGE_TYPES.ACK
-      @_respondToAck
+    if properties.type == MESSAGE_TYPES.REQUEST
+      @_respondToRequest
     else
       @_respondToSimpleDeliver
 
-  _respondToAck: (message, msgHandler, callback, done) ->
+  _respondToRequest: (message, msgHandler, callback, done) ->
     msgHandler.whenResponded.done (response) ->
-      done(MESSAGE_TYPES.ACK, response)
+      done(MESSAGE_TYPES.SUCCESS, response)
     , (error) ->
-      done(MESSAGE_TYPES.NACK, error)
+      done(MESSAGE_TYPES.ERROR, error)
     callback(message, msgHandler)
 
   _respondToSimpleDeliver: (message, msgHandler, callback) ->

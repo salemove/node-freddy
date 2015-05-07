@@ -53,7 +53,7 @@ describe 'Freddy', ->
 
     it 'can handle positive messages', (done) ->
       @freddy.respondTo @randomDest, (payload, handler) ->
-        handler.ack(pay: 'load')
+        handler.success(pay: 'load')
       .done =>
         @freddy.deliver @randomDest, msg, (response) ->
           expect(response).to.eql(pay: 'load')
@@ -63,7 +63,7 @@ describe 'Freddy', ->
 
     it 'can handle negative messages', (done) ->
       @freddy.respondTo @randomDest, (payload, handler) ->
-        handler.nack(error: 'not today')
+        handler.error(error: 'not today')
       .done =>
         @freddy.deliver @randomDest, msg, (response) ->
           done(Error('should have got a negative response'))

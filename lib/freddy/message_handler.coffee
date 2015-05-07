@@ -6,12 +6,12 @@ class MessageHandler
     @_responded = q.defer()
     @whenResponded = @_responded.promise
 
-  ack: (response) ->
-    @logger.debug("Responder acked with", response)
+  success: (response) ->
+    @logger.debug("Responder responded with a success message", response)
     @_responded.resolve(response || {})
 
-  nack: (errorMessage) ->
-    @logger.debug("Responder nacked with error", errorMessage)
-    @_responded.reject(errorMessage || "Message was nacked")
+  error: (errorMessage) ->
+    @logger.debug("Responder responded with an error", errorMessage)
+    @_responded.reject(errorMessage || "Couldn't process message")
 
 module.exports = MessageHandler
