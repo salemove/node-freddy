@@ -51,7 +51,7 @@ describe 'Freddy', ->
       .done =>
         @freddy.deliver @randomDest, {}
 
-    it 'can handle positive messages', (done) ->
+    it 'can handle success messages', (done) ->
       @freddy.respondTo @randomDest, (payload, handler) ->
         handler.success(pay: 'load')
       .done =>
@@ -59,24 +59,24 @@ describe 'Freddy', ->
           expect(response).to.eql(pay: 'load')
           done()
         , (error) ->
-          done(Error('should have got positive response'))
+          done(Error('should have got success response'))
 
-    it 'can handle negative messages', (done) ->
+    it 'can handle error messages', (done) ->
       @freddy.respondTo @randomDest, (payload, handler) ->
         handler.error(error: 'not today')
       .done =>
         @freddy.deliver @randomDest, msg, (response) ->
-          done(Error('should have got a negative response'))
+          done(Error('should have got a error response'))
         , (error) ->
           expect(error).to.eql(error: 'not today')
           done()
 
-    it 'requires a negative callback when positive is specified', (done) ->
+    it 'requires a error callback when success is specified', (done) ->
       try
         @freddy.deliver @randomDest, msg, (response) ->
           done(Error('should not happen'))
       catch e
-        expect(e.message).to.eql('negative callback is required')
+        expect(e.message).to.eql('error callback is required')
         done()
 
     describe 'when tapping', ->
@@ -93,24 +93,42 @@ describe 'Freddy', ->
             done()
           @freddy.deliver @randomDest, msg
 
-    context 'on timeout', ->
-      context 'with delete_on_timeout enabled', ->
-        it 'removes the message from the queue', (done) ->
-          @freddy.consumer.channel.assertQueue(@randomDest, autoDelete: true).then =>
-            @freddy.deliver @randomDest, msg, timeout: 0.01
+    context 'with send-and-forget message', ->
+      it 'removes the message from the queue when timeout specified', (done) ->
+        @freddy.consumer.channel.assertQueue(@randomDest, autoDelete: true).then =>
+          @freddy.deliver @randomDest, msg, timeout: 0.01
 
-            setTimeout =>
-              @freddy.respondTo @randomDest, (payload, handler) ->
-                done(Error('message was still in the queue'))
-              .done =>
-                setTimeout (-> done()), 20
-            , 60
+          setTimeout =>
+            @freddy.respondTo @randomDest, (payload, handler) ->
+              done(Error('message was still in the queue'))
+            .done =>
+              setTimeout (-> done()), 20
+          , 60
 
-      context 'with delete_on_timeout disabled', ->
-        it 'keeps the message in the queue', (done) ->
-          @freddy.consumer.channel.assertQueue(@randomDest, autoDelete: true).then =>
-            @freddy.deliver @randomDest, msg, timeout: 0.01, deleteOnTimeout: false
+      it 'keeps the message in the queue when timeout is not specified', (done) ->
+        @freddy.consumer.channel.assertQueue(@randomDest, autoDelete: true).then =>
+          @freddy.deliver @randomDest, msg
 
-            setTimeout =>
-              @freddy.respondTo @randomDest, (payload, handler) -> done()
-            , 20
+          setTimeout =>
+            @freddy.respondTo @randomDest, (payload, handler) -> done()
+          , 60
+
+    context 'with request message', ->
+      it 'removes the message from the queue when timeout occurs', (done) ->
+        @freddy.consumer.channel.assertQueue(@randomDest, autoDelete: true).then =>
+          @freddy.deliver @randomDest, msg, timeout: 0.01, (->), (->)
+
+          setTimeout =>
+            @freddy.respondTo @randomDest, (payload, handler) ->
+              done(Error('message was still in the queue'))
+            .done =>
+              setTimeout (-> done()), 20
+          , 60
+
+      it 'keeps the message in the queue when deleteOnTimeout is disabled', (done) ->
+        @freddy.consumer.channel.assertQueue(@randomDest, autoDelete: true).then =>
+          @freddy.deliver @randomDest, msg, timeout: 0.01, deleteOnTimeout: false, (->), (->)
+
+          setTimeout =>
+            @freddy.respondTo @randomDest, (payload, handler) -> done()
+          , 60

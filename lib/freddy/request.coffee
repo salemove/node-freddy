@@ -24,14 +24,14 @@ class Request
       @logger.debug "Created response queue for requests"
       q(this)
 
-  deliver: (destination, message, options, positiveCallback, negativeCallback) =>
-    if positiveCallback
+  deliver: (destination, message, options, successCallback, errorCallback) =>
+    if successCallback
       options.type = MESSAGE_TYPES.REQUEST
       @_request destination, message, options, (message, msgHandler) =>
-        if msgHandler.properties.type == MESSAGE_TYPES.SUCCESS
-          positiveCallback message
-        else if negativeCallback
-          negativeCallback message
+        if !msgHandler || msgHandler.properties.type == MESSAGE_TYPES.ERROR
+          errorCallback message
+        else
+          successCallback message
     else
       @producer.produce destination, message, options
 

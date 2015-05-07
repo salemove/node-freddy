@@ -9,23 +9,28 @@ class FreddyFacade
     @respondTo = @request.respondTo
     @tapInto = @consumer.tapInto
 
-  deliver: (destination, message, options, positiveCallback, negativeCallback) ->
+  deliver: (destination, message, options, successCallback, errorCallback) ->
     if typeof options is 'function'
-      negativeCallback = positiveCallback
-      positiveCallback = options
+      errorCallback = successCallback
+      successCallback = options
       options = {}
 
-    if positiveCallback && typeof negativeCallback != 'function'
-      throw Error('negative callback is required')
+    if successCallback && typeof successCallback != 'function'
+      throw Error('success callback is required')
+
+    if successCallback && typeof errorCallback != 'function'
+      throw Error('error callback is required')
 
     options ||= {}
     options = _.pick(options, 'timeout', 'suppressLog', 'deleteOnTimeout')
-    options['timeout'] ||= 3
 
-    if options['deleteOnTimeout'] == undefined
+    if successCallback
+      options['timeout'] ||= 3
+
+    if options['timeout'] && options['deleteOnTimeout'] == undefined
       options['deleteOnTimeout'] = true
 
-    @request.deliver(destination, message, options, positiveCallback, negativeCallback)
+    @request.deliver(destination, message, options, successCallback, errorCallback)
 
   shutdown: ->
     q(@onShutdown())
