@@ -15,6 +15,9 @@ class FreddyFacade
       positiveCallback = options
       options = {}
 
+    if positiveCallback && typeof negativeCallback != 'function'
+      throw Error('negative callback is required')
+
     options ||= {}
     options = _.pick(options, 'timeout', 'suppressLog', 'deleteOnTimeout')
     options['timeout'] ||= 3
