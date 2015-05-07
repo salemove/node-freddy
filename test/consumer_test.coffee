@@ -30,7 +30,7 @@ describe 'Consumer', ->
         done()
 
     context '#consume', ->
-      before ->
+      beforeEach ->
         @queue = "consumer-test-queue.#{Math.random()*100}"
         @msg = test: 'data'
 

@@ -4,11 +4,13 @@ _ = require 'underscore'
 #Encapsulate the request-response types of messaging
 class Request
 
-  DEFAULT_TIMEOUT = 3
-
   RESPONSE_QUEUE_OPTIONS =
-    queue:
-      exclusive: true
+    exclusive: true
+
+  MESSAGE_TYPES =
+    REQUEST: 'request'
+    SUCCESS: 'success'
+    ERROR: 'error'
 
   constructor: (@connection, @logger) ->
     @requests = {}
@@ -22,18 +24,16 @@ class Request
       @logger.debug "Created response queue for requests"
       q(this)
 
-  deliverWithAckAndOptions: (destination, message, options, callback) =>
-    options ||= {}
-    options.timeout ||= DEFAULT_TIMEOUT
-    options.headers = { message_with_ack: true }
-    @_request destination, message, options, (message, msgHandler) =>
-      callback message.error if (typeof callback is 'function')
-
-  deliverWithResponseAndOptions: (destination, message, options, callback) =>
-    options ||= {}
-    options.timeout ||= DEFAULT_TIMEOUT
-    @_request destination, message, options, (message, msgHandler) =>
-      callback message, msgHandler if (typeof callback is 'function')
+  deliver: (destination, message, options, successCallback, errorCallback) =>
+    if successCallback
+      options.type = MESSAGE_TYPES.REQUEST
+      @_request destination, message, options, (message, msgHandler) =>
+        if !msgHandler || msgHandler.properties.type == MESSAGE_TYPES.ERROR
+          errorCallback message
+        else
+          successCallback message
+    else
+      @producer.produce destination, message, options
 
   _request: (destination, message, options, callback) ->
     correlationId = @_uuid()
@@ -47,34 +47,26 @@ class Request
   respondTo: (destination, callback) =>
     @consumer.consume destination, (message, msgHandler) =>
       properties = msgHandler.properties
-      @_responder(properties) message, msgHandler, callback, (response) =>
-        @producer.produce properties.replyTo, response, {correlationId: properties.correlationId} if response?
+      @_responder(properties) message, msgHandler, callback, (type, response) =>
+        correlationId = properties.correlationId
+        @producer.produce properties.replyTo, response, {correlationId, type} if response?
 
   _responder: (properties) ->
-    if properties.headers?['message_with_ack']
-      responder = @_respondToAck
-    else if properties.correlationId
-      responder = @_respondToRequest
+    if properties.type == MESSAGE_TYPES.REQUEST
+      @_respondToRequest
     else
-      responder = @_respondToSimpleDeliver
-
-  _respondToAck: (message, msgHandler, callback, done) ->
-    msgHandler.whenResponded.done (response) =>
-      done(error: false)
-    , (error) =>
-      done(error: error)
-    callback(message, msgHandler)
+      @_respondToSimpleDeliver
 
   _respondToRequest: (message, msgHandler, callback, done) ->
-    msgHandler.whenResponded.done (response) =>
-      done(response)
-    , (error) =>
-      done(error: error)
+    msgHandler.whenResponded.done (response) ->
+      done(MESSAGE_TYPES.SUCCESS, response)
+    , (error) ->
+      done(MESSAGE_TYPES.ERROR, error)
     callback(message, msgHandler)
 
   _respondToSimpleDeliver: (message, msgHandler, callback) ->
     callback(message, msgHandler)
-    return null #avoid returning anything
+    return null # avoid returning anything
 
   _uuid: ->
     'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) ->
@@ -84,15 +76,13 @@ class Request
     )
 
   _timeout: (destination, message, timeoutSeconds, correlationId, callback) ->
-    setTimeout(
-      =>
-        errorText = "Timeout waiting for response from #{destination} with #{timeoutSeconds}s"
-        @logger.error "#{errorText}, payload:", message
-        @consumer.notifyErrorListeners(new Error(errorText))
-        delete @requests[correlationId]
-        callback {error: "Timeout waiting for response"} if (typeof callback is 'function')
-      , timeoutSeconds * 1000
-      )
+    setTimeout =>
+      errorText = "Timeout waiting for response from #{destination} with #{timeoutSeconds}s"
+      @logger.error "#{errorText}, payload:", message
+      @consumer.notifyErrorListeners(new Error(errorText))
+      delete @requests[correlationId]
+      callback {error: "Timeout waiting for response"} if (typeof callback is 'function')
+    , timeoutSeconds * 1000
 
   _setupResponseQueue: (channel) =>
     @consumer.consumeWithOptions '', RESPONSE_QUEUE_OPTIONS, (message, msgHandler) =>

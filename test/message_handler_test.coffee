@@ -15,9 +15,9 @@ describe 'MessageHandler', ->
   it 'has promise for checking for reponse', ->
     @messageHandler.whenResponded.should.be.ok
 
-  context 'when acked', ->
+  context 'when success', ->
     before -> @response = my: 'resp'
-    beforeEach -> @messageHandler.ack(@response)
+    beforeEach -> @messageHandler.success(@response)
 
     it 'resolves response promise with the response', (done) ->
       @messageHandler.whenResponded.done (response) =>
@@ -28,7 +28,7 @@ describe 'MessageHandler', ->
 
     context 'with error message', ->
       before -> @error = 'bad'
-      beforeEach -> @messageHandler.nack(@error)
+      beforeEach -> @messageHandler.error(@error)
 
       it 'resolves response promise with error', (done) ->
         @messageHandler.whenResponded.done (->), (error) =>
@@ -36,8 +36,8 @@ describe 'MessageHandler', ->
           done()
 
     context 'without error message', ->
-      before -> @error = "Message was nacked"
-      beforeEach -> @messageHandler.nack()
+      before -> @error = "Couldn't process message"
+      beforeEach -> @messageHandler.error()
       it "resolves response with error #{@error}", (done) ->
         @messageHandler.whenResponded.done (->), (error) =>
           error.should.eql(@error)
