@@ -5,7 +5,7 @@
   "description": "Simple messaging API supporting acknowledgements and request-response",
   "reporistory": {
     "type": "git",
-    "url": "https://github.com/salemove/freddy"
+    "url": "https://github.com/salemove/node-freddy"
   },
   "license": "MIT",
   "scripts": {
