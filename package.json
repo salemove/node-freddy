@@ -1,6 +1,6 @@
 {
   "name": "freddy",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "author": "Urmas Talimaa <urmas7@gmail.com>",
   "description": "Simple messaging API supporting acknowledgements and request-response",
   "repository": {
@@ -11,6 +11,7 @@
   "scripts": {
     "test": "mocha"
   },
+  "main": "./lib/freddy",
   "dependencies": {
     "coffee-script": ">=1.4",
     "amqplib": "^0.3.2",
