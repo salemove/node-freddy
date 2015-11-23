@@ -15,6 +15,12 @@ Freddy.connect('amqp://guest:guest@localhost:5672', logger).done (freddy) ->
   doSthWithError(error)
 ```
 
+## Supported message queues
+
+These message queues have been tested and are working with Freddy. Other queues can be added easily:
+
+ * [RabbitMQ](https://www.rabbitmq.com/)
+
 ## Delivering messages
 
 ### Simple delivery
