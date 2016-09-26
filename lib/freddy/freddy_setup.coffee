@@ -12,6 +12,7 @@ class FreddySetup
 
   constructor: (@logger) ->
     @errorListeners = []
+    @connectionErrorListeners = []
 
   connect: (amqpUrl) ->
     q(amqp.connect(amqpUrl)).then (@connection) =>
@@ -41,11 +42,14 @@ class FreddySetup
     @consumer.addErrorListener listener if @consumer?
 
   _registerConnectionListeners: ->
-    @connection.on 'close', =>
-      @logger.info "Closed amqp connection"
+    @connection.on 'close', (maybeErr) =>
+      if maybeErr
+        @_triggerErrorListeners(maybeErr)
+        @logger.error "Closed amqp connection due to error #{maybeErr}"
+      else
+        @logger.info "Closed amqp connection"
     @connection.on 'error', (err) =>
-      for listener in @errorListeners
-        listener(err) if typeof listener is 'function'
+      @_triggerErrorListeners(err)
       @logger.error "Amqp connection terminated due to error #{err}"
     @connection.on 'blocked', (reason) =>
       @logger.warn "Connection blocked to amqp, reason: #{reason}"
@@ -60,5 +64,9 @@ class FreddySetup
       @request = new Request @connection, @logger
       @request.prepare(@consumer, @producer).then =>
         q(this)
+
+  _triggerErrorListeners: (error) ->
+    for listener in @errorListeners
+      listener(error) if typeof listener is 'function'
 
 module.exports = FreddySetup
