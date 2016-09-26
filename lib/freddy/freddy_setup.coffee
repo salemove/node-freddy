@@ -12,7 +12,6 @@ class FreddySetup
 
   constructor: (@logger) ->
     @errorListeners = []
-    @connectionErrorListeners = []
 
   connect: (amqpUrl) ->
     q(amqp.connect(amqpUrl)).then (@connection) =>
