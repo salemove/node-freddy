@@ -13,12 +13,12 @@
   },
   "main": "./lib/freddy",
   "dependencies": {
-    "coffee-script": ">=1.4",
     "amqplib": ">=0.4.2",
-    "winston": ">= 0.7",
     "async": ">=0.2.10",
+    "coffeescript": "^2.4.1",
+    "q": ">= 1.0",
     "underscore": ">=1.6",
-    "q": ">= 1.0"
+    "winston": "^3.2.1"
   },
   "devDependencies": {
     "chai": "^2.3.0",
