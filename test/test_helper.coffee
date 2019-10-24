@@ -12,8 +12,9 @@ q         = require 'q'
 uniqueId = -> id = ""; id += Math.random().toString(36).substr(2) while id.length < 32; id.substr 0, 32
 
 logger = (level = 'debug') ->
-  new winston.Logger
+  winston.createLogger({
     transports: [ new winston.transports.Console level: level, colorize: true, timestamp: true ]
+  })
 
 deleteExchange = (connection, exchangeName) ->
   q(connection.createChannel()).then (channel) ->

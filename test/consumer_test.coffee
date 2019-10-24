@@ -63,12 +63,12 @@ describe 'Consumer', ->
 
         it 'can cancel consuming', (done) ->
           TestHelper.deliver(@connection, @queue, @topicName, @msg)
-          q.delay(5)
+          q.delay(25)
           .then =>
             @responderHandler.cancel()
           .then =>
             TestHelper.deliver(@connection, @queue, @topicName, @msg)
-            q.delay(5)
+            q.delay(25)
           .done =>
             @receivedMessages.should.eql(1)
             done()

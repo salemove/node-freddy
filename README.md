@@ -9,7 +9,24 @@ Inject the appropriate logger and set up connection parameters:
 ```coffee
 Freddy = require 'freddy'
 Freddy.addErrorListener(listener)
-Freddy.connect('amqp://guest:guest@localhost:5672', logger).done (freddy) ->
+Freddy.connect('amqp://guest:guest@localhost:5672', {logger}).done (freddy) ->
+  continueWith(freddy)
+, (error) ->
+  doSthWithError(error)
+```
+
+### TLS connection
+
+See http://www.squaremobius.net/amqp.node/ssl.html for available options.
+
+```coffee
+sslOptions = {
+  cert: fs.readFileSync('clientcert.pem'),
+  key: fs.readFileSync('clientkey.pem'),
+  ca: [fs.readFileSync('cacert.pem')]
+}
+
+Freddy.connect('amqps://localhost:5671', {logger, ...sslOptions}).done (freddy) ->
   continueWith(freddy)
 , (error) ->
   doSthWithError(error)

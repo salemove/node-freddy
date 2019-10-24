@@ -1,13 +1,17 @@
 winston = require 'winston'
 FreddySetup = require './freddy/freddy_setup'
 
-defaultLogger = new winston.Logger
-  transports: [ new winston.transports.Console level: 'info', colorize: true, timestamp: true ]
+defaultLogger = winston.createLogger({
+  transports: [
+    new winston.transports.Console(level: 'info', colorize: true, timestamp: true)
+  ]
+})
 
 setup = null
-connect = (amqpUrl, logger = defaultLogger) ->
+
+connect = (amqpUrl, {logger = defaultLogger, ...amqpOptions}) ->
   setup = new FreddySetup(logger)
-  setup.connect(amqpUrl)
+  setup.connect(amqpUrl, amqpOptions)
 
 addErrorListener = (listener) ->
   setup.addErrorListener listener if setup
