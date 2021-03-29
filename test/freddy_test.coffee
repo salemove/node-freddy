@@ -14,13 +14,6 @@ describe 'Freddy', ->
         , =>
           done Error("Connection should have succeeded, but failed")
 
-    context 'with incorrect amqp url', ->
-      it 'cannot connect', (done) ->
-        Freddy.connect('amqp://wrong:wrong@localhost:9000', {logger}).done ->
-          done(Error("Connection should have failed, but succeeded"))
-        , =>
-          done()
-
   context 'when connected', ->
     beforeEach (done) ->
       @randomDest = TestHelper.uniqueId()

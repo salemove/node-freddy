@@ -5,7 +5,7 @@ chai.use(sinonChai)
 global.expect = chai.expect
 
 winston   = require 'winston'
-amqp      = require 'amqplib'
+amqp      = require('amqp-connection-manager')
 amqpUrl   = "amqp://guest:guest@localhost:5672"
 q         = require 'q'
 
@@ -17,8 +17,13 @@ logger = (level = 'debug') ->
   })
 
 deleteExchange = (connection, exchangeName) ->
-  q(connection.createChannel()).then (channel) ->
-    channel.deleteExchange(exchangeName)
+  q(new Promise((resolve, reject) ->
+    connection.createChannel({
+      setup: (amqpChannel) ->
+        amqpChannel.deleteExchange(exchangeName)
+        resolve()
+    })
+  ))
 
 connect = ->
   q(amqp.connect(amqpUrl))

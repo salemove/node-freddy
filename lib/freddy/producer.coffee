@@ -12,15 +12,17 @@ class Producer
   constructor: (@connection, @logger) ->
 
   prepare: (@topicName) ->
-    q(@connection.createChannel()).then (@channel) =>
-      @logger.debug("Channel created for producer")
-      q(@channel.assertExchange(@topicName, 'topic', TOPIC_EXCHANGE_OPTIONS))
-    .then =>
-      @logger.debug("Topic exchange created for producer")
-      q(this)
-    , (err) =>
-      @logger.error("Failed to prepare Producer: #{err}")
-      q.reject(err)
+    channel = @connection.createChannel({
+      name: 'producerChannel',
+      setup: (@channel) =>
+        @logger.debug("Channel created for producer")
+        return q(@channel.assertExchange(@topicName, 'topic', TOPIC_EXCHANGE_OPTIONS)).then(() =>
+          @logger.debug("Topic exchange created for producer")
+        )
+    })
+    return q(new Promise((resolve, _reject) =>
+      channel.on('connect', () => resolve(this))
+    ))
 
   produce: (destination, message = {}, options = {}) ->
     @_ensureDestination(destination)
