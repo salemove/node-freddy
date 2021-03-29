@@ -18,15 +18,18 @@ class Consumer
     @errorListeners.push listener
 
   prepare: (@topicName) ->
-    q(@connection.createChannel()).then (@channel) =>
-      @logger.debug("Channel created for consumer")
-      @channel.assertExchange(@topicName, 'topic', TOPIC_OPTIONS)
-    .then =>
-      @logger.debug("Topic exchange created for consumer")
-      q(this)
-    , (err) =>
-      @logger.error("Failed to prepare Producer: #{err}")
-      q.reject(err)
+    channel = @connection.createChannel({
+      name: 'consumerChannel',
+      setup: (@channel) =>
+        @logger.debug("Channel created for consumer")
+        return q(@channel.assertExchange(@topicName, 'topic', TOPIC_OPTIONS)).then(() =>
+          @logger.debug("Topic exchange created for producer")
+        )
+    })
+
+    return q(new Promise((resolve, _reject) =>
+      channel.on('connect', () => resolve(this))
+    ))
 
   _ensureQueue: (queue) ->
     if !queue? or !(typeof queue is 'string')

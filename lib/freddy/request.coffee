@@ -17,12 +17,14 @@ class Request
     @responseQueue = null
 
   prepare: (@consumer, @producer) ->
-    q.reject('Need consumer and producer') unless @consumer and @producer
-    q(@connection.createChannel()).then (channel) =>
-      @_setupResponseQueue(channel)
-    .then =>
-      @logger.debug "Created response queue for requests"
-      q(this)
+    return q.reject('Need consumer and producer') unless @consumer and @producer
+    channel = @connection.createChannel({
+      setup: @_setupResponseQueue
+    })
+
+    return q(new Promise((resolve, reject) =>
+      channel.on('connect', resolve)
+    ))
 
   deliver: (destination, message, options, successCallback, errorCallback) =>
     if successCallback
@@ -85,6 +87,7 @@ class Request
     , timeoutSeconds * 1000
 
   _setupResponseQueue: (channel) =>
+    @logger.debug "Created response queue for requests"
     @consumer.consumeWithOptions '', RESPONSE_QUEUE_OPTIONS, (message, msgHandler) =>
       correlationId = msgHandler.properties.correlationId
       if @requests[correlationId]?

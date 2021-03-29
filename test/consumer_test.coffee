@@ -35,9 +35,11 @@ describe 'Consumer', ->
         @msg = test: 'data'
 
       afterEach (done) ->
-        @connection.createChannel().then (channel) =>
-          channel.deleteQueue(@queue)
-          done()
+        @connection.createChannel({
+          setup: (amqpChannel) =>
+            amqpChannel.deleteQueue(@queue)
+            done()
+        })
 
       it 'resolves when done', (done) ->
         @consumer.consume(@queue, (->)).then ->

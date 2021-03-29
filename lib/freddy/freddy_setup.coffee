@@ -1,7 +1,8 @@
 Producer = require './producer'
 Consumer = require './consumer'
 Request  = require './request'
-amqp     = require 'amqplib'
+amqp     = require('amqp-connection-manager')
+
 q        = require 'q'
 _ = require 'underscore'
 FreddyFacade = require './freddy_facade'
@@ -12,6 +13,7 @@ class FreddySetup
 
   constructor: (@logger) ->
     @errorListeners = []
+    @connectListeners = []
 
   connect: (amqpUrl, amqpOptions) ->
     q(amqp.connect(amqpUrl, amqpOptions)).then (@connection) =>
@@ -40,7 +42,17 @@ class FreddySetup
     @errorListeners.push listener
     @consumer.addErrorListener listener if @consumer?
 
+  addConnectListener: (listener) ->
+    @connectListeners.push listener
+
   _registerConnectionListeners: ->
+    @connection.on 'connect', (params) =>
+      @logger.info "amqp connected #{params?.url}"
+      @_triggerConnectionListeners()
+
+    @connection.on 'disconnect', (params) =>
+      @logger.info "amqp disconnected #{params?.err}"
+
     @connection.on 'close', (maybeErr) =>
       if maybeErr
         @_triggerErrorListeners(maybeErr)
@@ -66,6 +78,10 @@ class FreddySetup
 
   _triggerErrorListeners: (error) ->
     for listener in @errorListeners
+      listener(error) if typeof listener is 'function'
+
+  _triggerConnectionListeners: (error) ->
+    for listener in @connectListeners
       listener(error) if typeof listener is 'function'
 
 module.exports = FreddySetup
