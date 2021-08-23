@@ -52,6 +52,7 @@ class FreddySetup
 
     @connection.on 'disconnect', (params) =>
       @logger.info "amqp disconnected #{params?.err}"
+      @_triggerReconnect()
 
     @connection.on 'close', (maybeErr) =>
       if maybeErr
@@ -83,5 +84,8 @@ class FreddySetup
   _triggerConnectionListeners: (error) ->
     for listener in @connectListeners
       listener(error) if typeof listener is 'function'
+
+  _triggerReconnect: =>
+    @request.setIsReconnecting(true) if @request
 
 module.exports = FreddySetup
