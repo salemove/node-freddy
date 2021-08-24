@@ -13,6 +13,7 @@ class Consumer
 
   constructor: (@connection, @logger) ->
     @errorListeners = []
+    @consumers = {}
 
   addErrorListener: (listener) ->
     @errorListeners.push listener
@@ -36,7 +37,15 @@ class Consumer
       throw "Destination must be provided as a string"
 
   consume: (queue, callback) ->
+    @consumers[queue] = {
+      queueOpts: QUEUE_OPTIONS,
+      callback: callback
+    }
     @consumeWithOptions(queue, QUEUE_OPTIONS, callback)
+
+  resumeConsumers: () =>
+    for queue, consumer of @consumers
+      @consumeWithOptions(queue, consumer['queueOpts'], consumer['callback'])
 
   consumeWithOptions: (queue, queueOpts, callback) ->
     @_ensureQueue(queue)

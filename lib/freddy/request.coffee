@@ -15,6 +15,10 @@ class Request
   constructor: (@connection, @logger) ->
     @requests = {}
     @responseQueue = null
+    @isReconnecting = false
+
+  setIsReconnecting: (value) ->
+    @isReconnecting = value
 
   prepare: (@consumer, @producer) ->
     return q.reject('Need consumer and producer') unless @consumer and @producer
@@ -88,6 +92,10 @@ class Request
 
   _setupResponseQueue: (channel) =>
     @logger.debug "Created response queue for requests"
+    if @isReconnecting
+      @logger.debug "Resuming consumers after reconnect"
+      @consumer.resumeConsumers()
+      @setIsReconnecting(false)
     @consumer.consumeWithOptions '', RESPONSE_QUEUE_OPTIONS, (message, msgHandler) =>
       correlationId = msgHandler.properties.correlationId
       if @requests[correlationId]?
